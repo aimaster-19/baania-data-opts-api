@@ -156,8 +156,6 @@ export const refreshToken = async (
   res: Response,
 ): Promise<void> => {
   try {
-    console.log('Cookies received:', req.cookies)
-    console.log('Refresh token from cookie:', req)
 
     const token = req.cookies.refreshToken
 

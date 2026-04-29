@@ -6,7 +6,7 @@ import { BannerGroup } from '../entities/postgres/BannerGroup'
 import { TrackingLog } from '../entities/postgres/TrackingLog'
 
 // Create the connection for main data (CRUD MongoDB)
-const dataDb = mongoose.createConnection(process.env.MONGODB_URI_DATA as string)
+const dbRead = mongoose.createConnection(process.env.MONGODB_URI_READ as string)
 
 // Create the AppDataSource for PostgreSQL (TypeORM)
 const AppDataSource = new DataSource({
@@ -31,8 +31,8 @@ const AppDataSource = new DataSource({
 const connectDB = async () => {
   try {
     // 1. Connect MongoDBs
-    await Promise.all([dataDb.asPromise()])
-    console.log(`MongoDB Connected: Both DataDB and LogDB established`)
+    await Promise.all([dbRead.asPromise()])
+    console.log(`MongoDB Connected: dbRead established`)
 
     // 2. Connect PostgreSQL via TypeORM
     await AppDataSource.initialize()
@@ -43,5 +43,5 @@ const connectDB = async () => {
   }
 }
 
-export { dataDb, AppDataSource }
+export { dbRead, AppDataSource }
 export default connectDB

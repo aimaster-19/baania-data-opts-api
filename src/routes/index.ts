@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import authRoutes from './authRoutes'
 import versionRoutes from './versionRoutes'
+import projectReadRoutes from './projectReadRoutes'
 import { protect } from '../middlewares/authMiddleware'
 import { getMe } from '../controllers/authController'
 
@@ -16,6 +17,7 @@ router.use(`/${apiVersion}/auth`, authRoutes)
 router.get(`/${apiVersion}/me`, protect, getMe)
 
 // You can easily add more routes here, e.g.:
+router.use(`/${apiVersion}/projectread`, projectReadRoutes)
 // router.use('/users', userRoutes);
 // router.use('/data', dataRoutes);
 
