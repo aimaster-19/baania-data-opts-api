@@ -10,8 +10,7 @@ export default class BaaniaService {
   }): Promise<any> {
     try {
       const baaniaLoginUrl =
-        process.env.SSO_URL + '/api/v1/login' ||
-        'https://api.baania.com/api/v1/login'
+        process.env.SSO_URL + '/api/v1/login' || 'https://api.baania.com/api/v1/login'
       const response = await axios.post(baaniaLoginUrl, {
         email,
         password

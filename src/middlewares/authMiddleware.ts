@@ -13,35 +13,25 @@ export const protect = async (
 ): Promise<void> => {
   let token
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1]
   }
 
   // Make sure token exists
   if (!token) {
-    res
-      .status(401)
-      .json({ status: 401, message: 'Not authorized to access this route' })
+    res.status(401).json({ status: 401, message: 'Not authorized to access this route' })
     return
   }
 
   try {
     // Verify token and extract full user payload directly
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'JWT_SECRETKEY'
-    ) as IUser
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'JWT_SECRETKEY') as IUser
 
     // Attach decoded user directly to req.user (avoids extra database roundtrips)
     req.user = decoded
 
     next()
   } catch (err) {
-    res
-      .status(401)
-      .json({ status: 401, message: 'Not authorized to access this route' })
+    res.status(401).json({ status: 401, message: 'Not authorized to access this route' })
   }
 }

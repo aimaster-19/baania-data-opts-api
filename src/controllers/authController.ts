@@ -20,10 +20,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 // @desc    Auth user via Firebase
 // @route   POST /api/auth/login-firebase
 // @access  Public
-export const loginFirebase = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const loginFirebase = async (req: Request, res: Response): Promise<void> => {
   try {
     const { decodedToken } = req.body
 
@@ -70,10 +67,7 @@ export const loginFirebase = async (
 // @desc    Auth user via Email & SSO
 // @route   POST /api/auth/login-email
 // @access  Public
-export const loginEmail = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const loginEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body
 
@@ -82,16 +76,12 @@ export const loginEmail = async (
     try {
       baaniaUser = await BaaniaService.loginSso({ email, password })
     } catch (ssoError: any) {
-      res
-        .status(401)
-        .json({ status: 401, message: `SSO Error: ${ssoError.message}` })
+      res.status(401).json({ status: 401, message: `SSO Error: ${ssoError.message}` })
       return
     }
 
     if (!baaniaUser || !baaniaUser.email) {
-      res
-        .status(401)
-        .json({ status: 401, message: 'Invalid response from SSO provider' })
+      res.status(401).json({ status: 401, message: 'Invalid response from SSO provider' })
       return
     }
 
@@ -100,8 +90,7 @@ export const loginEmail = async (
     try {
       admin = await AuthenticateService.loginEmail(baaniaUser.email)
     } catch (dbError: any) {
-      const errorMessage =
-        dbError.message || 'Admin not registered locally or not active'
+      const errorMessage = dbError.message || 'Admin not registered locally or not active'
       res.status(401).json({
         status: 401,
         message: errorMessage
@@ -110,9 +99,7 @@ export const loginEmail = async (
     }
 
     if (!admin) {
-      res
-        .status(401)
-        .json({ status: 401, message: 'Admin not registered locally' })
+      res.status(401).json({ status: 401, message: 'Admin not registered locally' })
       return
     }
 
@@ -151,10 +138,7 @@ export const loginEmail = async (
 // @desc    Refresh access token
 // @route   POST /api/auth/refresh
 // @access  Public (but requires valid refresh token in cookie)
-export const refreshToken = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
     const token = req.cookies.refreshToken
 
@@ -169,10 +153,7 @@ export const refreshToken = async (
     let decoded: any
 
     try {
-      decoded = jwt.verify(
-        token,
-        process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY'
-      )
+      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY')
     } catch {
       res.status(401).json({
         status: 401,
@@ -230,10 +211,7 @@ export const refreshToken = async (
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
-export const logoutUser = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const logoutUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     // Get admin ID from the authenticated request
     const adminId = req.user?.id

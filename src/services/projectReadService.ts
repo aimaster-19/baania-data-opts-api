@@ -41,10 +41,7 @@ export class ProjectReadService {
    */
   public static async createProjectRead(
     dto: CreateProjectDTO
-  ): Promise<
-    | { success: true; data: any }
-    | { success: false; validation: ValidationResult }
-  > {
+  ): Promise<{ success: true; data: any } | { success: false; validation: ValidationResult }> {
     // 1. Validate
     const validation = validateCreateProject(dto)
     if (!validation.valid) {
@@ -74,12 +71,7 @@ export class ProjectReadService {
     // Run count and find in parallel to cut response time
     const [total, data] = await Promise.all([
       ProjectRead.countDocuments(filter),
-      ProjectRead.find(filter)
-        .select(selectedFields)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean() // lean() returns plain JS objects — faster & less memory
+      ProjectRead.find(filter).select(selectedFields).sort(sort).skip(skip).limit(limit).lean() // lean() returns plain JS objects — faster & less memory
     ])
 
     const totalPages = Math.ceil(total / limit)

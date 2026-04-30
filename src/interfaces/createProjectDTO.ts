@@ -42,10 +42,7 @@ const PROPERTY_TYPE_MAP: Record<string, PropertyTypeEntry> = {
 
 // ── Facility mapping ───────────────────────────────────────────────────
 
-const FACILITY_MAP: Record<
-  string,
-  { key: string; infoKey: string; type: 'number' | 'string' }
-> = {
+const FACILITY_MAP: Record<string, { key: string; infoKey: string; type: 'number' | 'string' }> = {
   สระว่ายน้ำ: { key: 'has_pool', infoKey: 'info_pool', type: 'number' },
   ฟิตเนส: { key: 'has_fitness', infoKey: 'info_fitness', type: 'number' },
   สวนหย่อม: { key: 'has_park', infoKey: 'info_park', type: 'string' },
@@ -124,9 +121,7 @@ export function validateCreateProject(dto: CreateProjectDTO): ValidationResult {
 
 // ── Transform ──────────────────────────────────────────────────────────
 
-export function transformToDocument(
-  dto: CreateProjectDTO
-): Record<string, any> {
+export function transformToDocument(dto: CreateProjectDTO): Record<string, any> {
   const now = Date.now()
   const propertyType = PROPERTY_TYPE_MAP[dto.type]
 

@@ -5,11 +5,7 @@ import { PaginationOptions } from '../interfaces/pagination'
 /**
  * Sanitize and clamp a numeric query parameter.
  */
-function toPositiveInt(
-  value: unknown,
-  defaultValue: number,
-  max?: number
-): number {
+function toPositiveInt(value: unknown, defaultValue: number, max?: number): number {
   const num = Number(value)
   if (!Number.isFinite(num) || num < 1) return defaultValue
   const result = Math.floor(num)
@@ -159,9 +155,7 @@ export const getProjectReadById = async (req: Request, res: Response) => {
     const id = req.params.id as string
     const project = await ProjectReadService.getProjectReadById(id)
     if (!project) {
-      return res
-        .status(404)
-        .json({ status: 404, message: 'ProjectRead not found' })
+      return res.status(404).json({ status: 404, message: 'ProjectRead not found' })
     }
     res.status(200).json({ status: 200, data: project })
   } catch (error: any) {
@@ -174,9 +168,7 @@ export const updateProjectRead = async (req: Request, res: Response) => {
     const id = req.params.id as string
     const project = await ProjectReadService.updateProjectRead(id, req.body)
     if (!project) {
-      return res
-        .status(404)
-        .json({ status: 404, message: 'ProjectRead not found' })
+      return res.status(404).json({ status: 404, message: 'ProjectRead not found' })
     }
     res.status(200).json({ status: 200, data: project })
   } catch (error: any) {
@@ -189,13 +181,9 @@ export const deleteProjectRead = async (req: Request, res: Response) => {
     const id = req.params.id as string
     const project = await ProjectReadService.deleteProjectRead(id)
     if (!project) {
-      return res
-        .status(404)
-        .json({ status: 404, message: 'ProjectRead not found' })
+      return res.status(404).json({ status: 404, message: 'ProjectRead not found' })
     }
-    res
-      .status(200)
-      .json({ status: 200, message: 'ProjectRead deleted successfully' })
+    res.status(200).json({ status: 200, message: 'ProjectRead deleted successfully' })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
   }
