@@ -24,7 +24,7 @@ const AppDataSource = new DataSource({
   // Connection pool settings to prevent concurrent query issues
   poolSize: 10,
   maxQueryExecutionTime: 30000, // 30 seconds
-  connectTimeoutMS: 30000,
+  connectTimeoutMS: 30000
 })
 
 // Helper function to wait for connections to be established on server startup

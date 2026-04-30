@@ -20,11 +20,11 @@ const LogSchema: Schema = new Schema(
     log_type: { type: String, required: true },
     description: { type: String, required: true },
     response: { type: String, required: true },
-    credit_log: { type: Schema.Types.Mixed }, // Mongoose equivalent to 'any'
+    credit_log: { type: Schema.Types.Mixed } // Mongoose equivalent to 'any'
   },
   {
-    timestamps: { createdAt: 'created_at', updatedAt: false },
-  },
+    timestamps: { createdAt: 'created_at', updatedAt: false }
+  }
 )
 
 export default dataDb.model<ILog>('Log', LogSchema)

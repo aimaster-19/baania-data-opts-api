@@ -16,15 +16,15 @@ app.use(
   cors({
     origin: ['http://localhost:5175', 'http://localhost:5173'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  }),
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  })
 )
 
 // Rate limiting to prevent brute force
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window`
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  message: 'Too many requests from this IP, please try again after 15 minutes'
 })
 app.use('/api', limiter)
 

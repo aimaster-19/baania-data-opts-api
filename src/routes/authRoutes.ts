@@ -4,7 +4,7 @@ import {
   loginFirebase,
   loginEmail,
   refreshToken,
-  logoutUser,
+  logoutUser
 } from '../controllers/authController'
 import { protect } from '../middlewares/authMiddleware'
 

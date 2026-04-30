@@ -22,22 +22,22 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       province_th: { type: String },
       landzone: {
         name: { type: String },
-        id: { type: String },
-      },
+        id: { type: String }
+      }
     },
     ads: {
       retarget_google_content_type: { type: String },
       has_retarket_ads: { type: Boolean },
       retarget_content_id: { type: String },
       retarget_facebook_content_type: { type: String },
-      retarget_price_start: { type: String },
+      retarget_price_start: { type: String }
     },
     created: { type: Number },
     detail: {
       area_total: {
         wa: { type: Number },
         ngan: { type: Number },
-        rai: { type: Number },
+        rai: { type: Number }
       },
       num_lift_service: { type: String },
       num_unit_type: { type: String },
@@ -47,14 +47,14 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       num_floor: { type: Number },
       ratio_parking: { type: String },
       insurance_condition: { type: String },
-      num_parking: { type: String },
+      num_parking: { type: String }
     },
     developer: {
       image: {
         thumbnail: { type: String },
         alt: { type: String },
         title: { type: String },
-        url: { type: String },
+        url: { type: String }
       },
       capital: { type: Number },
       website: { type: String },
@@ -74,12 +74,12 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
         right: { type: String },
         top: { type: String },
         left: { type: String },
-        lat: { type: String },
+        lat: { type: String }
       },
       title_en: { type: String },
       id: { type: String },
       department: { type: String },
-      email: { type: String },
+      email: { type: String }
     },
     email: { type: String },
     facebook: { type: String },
@@ -99,7 +99,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       info_clubhouse: { type: String },
       has_clubhouse: { type: Number },
       info_park: { type: String },
-      has_service_bus: { type: String },
+      has_service_bus: { type: String }
     },
     financial: {
       price_land: { type: String },
@@ -113,7 +113,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       price_facility: { type: String },
       num_yield: { type: String },
       start_price_not_found: { type: Boolean },
-      not_show_start_price: { type: Boolean },
+      not_show_start_price: { type: Boolean }
     },
     footnote: {
       info_landlord: { type: String },
@@ -122,7 +122,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       info_designer: { type: String },
       info_land_id: { type: String },
       info_license_id: { type: String },
-      info_financial: { type: String },
+      info_financial: { type: String }
     },
     general: {
       building_amount: { type: String },
@@ -133,35 +133,37 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       promotion_stop: { type: String },
       slogan: { type: String },
       status: { type: String },
-      detail: { type: String },
+      detail: { type: String }
     },
     id: { type: String },
     images: {
       project: {
         thumbnail: { type: String },
         title: { type: String },
-        url: { type: String },
+        url: { type: String }
       },
       main: {
         thumbnail: { type: String },
         title: { type: String },
         url: { type: String },
         webp_main: { type: String },
-        webp_thumbnail: { type: String },
+        webp_thumbnail: { type: String }
       },
       nearby: { type: String },
-      overall: [{
+      overall: [
+        {
           title: { type: String },
           url: { type: String },
           thumbnail: { type: String },
           webp_main: { type: String },
-          webp_thumbnail: { type: String },
-        }],
+          webp_thumbnail: { type: String }
+        }
+      ],
       map: {
         thumbnail: { type: String },
         title: { type: String },
-        url: { type: String },
-      },
+        url: { type: String }
+      }
     },
     info: {
       search_keyword: { type: String },
@@ -169,7 +171,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       hasBlogic: { type: Boolean },
       posted: { type: String },
       title_th: { type: String },
-      title_en: { type: String },
+      title_en: { type: String }
     },
     line: { type: String },
     location: {
@@ -179,11 +181,11 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       right: { type: String },
       top: { type: String },
       left: { type: String },
-      lat: { type: Number },
+      lat: { type: Number }
     },
     meta: {
       meta_keywords: { type: String },
-      meta_description: { type: String },
+      meta_description: { type: String }
     },
     progress: {
       progress_overall: { type: String },
@@ -192,7 +194,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       progress_architect: { type: String },
       date_finish: { type: String },
       progress_structure: { type: String },
-      progress_wiring: { type: String },
+      progress_wiring: { type: String }
     },
     promote: {
       promote_review: { type: Number },
@@ -204,33 +206,36 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       promote_compare: { type: Number },
       promote_list: { type: Number },
       promote_comment: { type: String },
-      promote_start_date: { type: Number },
+      promote_start_date: { type: Number }
     },
-    property_type: [{
+    property_type: [
+      {
         title_th: { type: String },
         title_en: { type: String },
-        id: { type: Number },
-      }],
+        id: { type: Number }
+      }
+    ],
     published: { type: Number },
     selloffice: {
       contact_number: { type: String },
-      address_selloffice: { type: String },
+      address_selloffice: { type: String }
     },
     transaction: [],
     uid: { type: String },
-    unittype: [{
+    unittype: [
+      {
         image: {
           title: { type: String },
           url: { type: String },
           thumbnail: { type: String },
           webp_main: { type: String },
-          webp_thumbnail: { type: String },
+          webp_thumbnail: { type: String }
         },
         area_land: {
           area: { type: String },
           wa: { type: Number },
           ngan: { type: Number },
-          rai: { type: Number },
+          rai: { type: Number }
         },
         price_start: { type: Number },
         num_bed: { type: Number },
@@ -239,7 +244,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
         title: { type: String },
         url: {
           alias_th: { type: String },
-          alias_en: { type: String },
+          alias_en: { type: String }
         },
         area_usable: { type: Number },
         num_bath: { type: Number },
@@ -252,40 +257,41 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
         count_room_guest: { type: String },
         sold_out: { type: Boolean },
         not_show_start_price: { type: Boolean },
-        start_price_not_found: { type: Boolean },
-      }],
+        start_price_not_found: { type: Boolean }
+      }
+    ],
     updated: { type: Number },
     url: {
       alias_th: { type: String },
-      alias_en: { type: String },
+      alias_en: { type: String }
     },
     video: {
       video: {
         thumbnail: { type: String },
         title: { type: String },
-        url: { type: String },
+        url: { type: String }
       },
       aerial: {
         thumbnail: { type: String },
         title: { type: String },
-        url: { type: String },
+        url: { type: String }
       },
       customer: {
         thumbnail: { type: String },
         title: { type: String },
-        url: { type: String },
-      },
+        url: { type: String }
+      }
     },
     website: { type: String },
     exreview: { type: String },
-    livingscore: { type: String },
+    livingscore: { type: String }
   },
   geopoint: {
     coordinates: [{ type: Number }],
-    type: { type: String },
+    type: { type: String }
   },
   isShouldUpdate: { type: String },
   keyId: { type: String },
   updated: { type: String },
-  deletedAt: { type: String },
+  deletedAt: { type: String }
 })

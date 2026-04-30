@@ -13,7 +13,7 @@ router.get('/', (req: Request, res: Response): void => {
       version: '1.0.0',
       environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
+      uptime: process.uptime()
     })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })

@@ -40,14 +40,14 @@ export interface IUser extends Document {
 const AgreementSchema = new Schema(
   {
     email: {
-      news: { type: Number, default: 0 },
+      news: { type: Number, default: 0 }
     },
     term: {
       pdpa: { type: Number, default: 0 },
-      pdpa_timestamp: { type: String },
-    },
+      pdpa_timestamp: { type: String }
+    }
   },
-  { _id: false },
+  { _id: false }
 )
 
 const UserSchema: Schema = new Schema(
@@ -58,26 +58,26 @@ const UserSchema: Schema = new Schema(
     uid: { type: String },
     name: {
       type: String,
-      required: [true, 'Please add a name'],
+      required: [true, 'Please add a name']
     },
     email: {
       type: String,
       required: [true, 'Please add an email'],
       unique: true,
       match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        'Please add a valid email',
-      ],
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        'Please add a valid email'
+      ]
     },
     password: {
       type: String,
       minlength: 6,
-      select: false, // Don't return password by default
+      select: false // Don't return password by default
     },
     role: {
       type: String,
       enum: ['user', 'admin'],
-      default: 'user',
+      default: 'user'
     },
     personalID: { type: String },
     last_sign_on: { type: Date },
@@ -89,11 +89,11 @@ const UserSchema: Schema = new Schema(
     account_type: { type: String },
     credit: { type: Number, default: 0 },
     agreement: { type: AgreementSchema },
-    refreshTokens: { type: String, default: null },
+    refreshTokens: { type: String, default: null }
   },
   {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-  },
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  }
 )
 
 // Encrypt password using bcrypt

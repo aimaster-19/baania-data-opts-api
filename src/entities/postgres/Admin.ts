@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  OneToMany,
+  OneToMany
 } from 'typeorm'
 import { Banner } from './Banner'
 import { BannerGroup } from './BannerGroup'
@@ -62,14 +62,14 @@ export class Admin extends BaseEntity {
   @Column('enum', {
     name: 'status',
     enum: ['active', 'inactive'],
-    nullable: true,
+    nullable: true
   })
   status: 'active' | 'inactive' | null
 
   @Column({
     name: 'last_login_date',
     type: 'timestamp with time zone',
-    nullable: true,
+    nullable: true
   })
   lastLoginDate: Date | null
 

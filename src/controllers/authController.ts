@@ -22,7 +22,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 // @access  Public
 export const loginFirebase = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const { decodedToken } = req.body
@@ -33,7 +33,7 @@ export const loginFirebase = async (
     }
 
     const admin = await Admin.findOne({
-      where: { firebaseUid: decodedToken.uid },
+      where: { firebaseUid: decodedToken.uid }
     })
 
     if (!admin) {
@@ -44,13 +44,13 @@ export const loginFirebase = async (
     const accessToken = jwt.sign(
       { id: admin.id, email: admin.email },
       process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' },
+      { expiresIn: '15m' }
     )
 
     const refreshToken = jwt.sign(
       { id: admin.id },
       process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' },
+      { expiresIn: '7d' }
     )
 
     admin.refreshTokens = refreshToken
@@ -60,7 +60,7 @@ export const loginFirebase = async (
       status: 200,
       token: accessToken,
       refreshToken,
-      payload: { id: admin.id, email: admin.email },
+      payload: { id: admin.id, email: admin.email }
     })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
@@ -72,7 +72,7 @@ export const loginFirebase = async (
 // @access  Public
 export const loginEmail = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const { email, password } = req.body
@@ -100,11 +100,11 @@ export const loginEmail = async (
     try {
       admin = await AuthenticateService.loginEmail(baaniaUser.email)
     } catch (dbError: any) {
-      let errorMessage =
+      const errorMessage =
         dbError.message || 'Admin not registered locally or not active'
       res.status(401).json({
         status: 401,
-        message: errorMessage,
+        message: errorMessage
       })
       return
     }
@@ -119,13 +119,13 @@ export const loginEmail = async (
     const accessToken = jwt.sign(
       { id: admin.id, email: admin.email },
       process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' },
+      { expiresIn: '15m' }
     )
 
     const refreshToken = jwt.sign(
       { id: admin.id },
       process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' },
+      { expiresIn: '7d' }
     )
 
     admin.refreshTokens = refreshToken
@@ -135,13 +135,13 @@ export const loginEmail = async (
       httpOnly: true,
       secure: false, //process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
     res.status(200).json({
       status: 200,
       token: accessToken,
-      payload: { id: admin.id, email: admin.email },
+      payload: { id: admin.id, email: admin.email }
     })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
@@ -153,16 +153,15 @@ export const loginEmail = async (
 // @access  Public (but requires valid refresh token in cookie)
 export const refreshToken = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-
     const token = req.cookies.refreshToken
 
     if (!token) {
       res.status(401).json({
         status: 401,
-        message: 'Refresh token not provided',
+        message: 'Refresh token not provided'
       })
       return
     }
@@ -172,24 +171,24 @@ export const refreshToken = async (
     try {
       decoded = jwt.verify(
         token,
-        process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
+        process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY'
       )
     } catch {
       res.status(401).json({
         status: 401,
-        message: 'Invalid or expired refresh token',
+        message: 'Invalid or expired refresh token'
       })
       return
     }
 
     const admin = await Admin.findOne({
-      where: { id: decoded.id },
+      where: { id: decoded.id }
     })
 
     if (!admin || admin.refreshTokens !== token) {
       res.status(401).json({
         status: 401,
-        message: 'Invalid refresh token',
+        message: 'Invalid refresh token'
       })
       return
     }
@@ -197,13 +196,13 @@ export const refreshToken = async (
     const newAccessToken = jwt.sign(
       { id: admin.id, email: admin.email },
       process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' },
+      { expiresIn: '15m' }
     )
 
     const newRefreshToken = jwt.sign(
       { id: admin.id },
       process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' },
+      { expiresIn: '7d' }
     )
 
     admin.refreshTokens = newRefreshToken
@@ -213,17 +212,17 @@ export const refreshToken = async (
       httpOnly: true,
       secure: false, // process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
     res.status(200).json({
       status: 200,
-      token: newAccessToken,
+      token: newAccessToken
     })
   } catch (error: any) {
     res.status(500).json({
       status: 500,
-      message: error.message,
+      message: error.message
     })
   }
 }
@@ -233,7 +232,7 @@ export const refreshToken = async (
 // @access  Private
 export const logoutUser = async (
   req: AuthRequest,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     // Get admin ID from the authenticated request

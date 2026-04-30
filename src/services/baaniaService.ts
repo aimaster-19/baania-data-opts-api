@@ -3,7 +3,7 @@ import axios from 'axios'
 export default class BaaniaService {
   public static async loginSso({
     email,
-    password,
+    password
   }: {
     email: string
     password: string
@@ -14,7 +14,7 @@ export default class BaaniaService {
         'https://api.baania.com/api/v1/login'
       const response = await axios.post(baaniaLoginUrl, {
         email,
-        password,
+        password
       })
 
       return response.data
