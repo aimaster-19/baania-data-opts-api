@@ -1,16 +1,17 @@
 import { FilterQuery } from 'mongoose'
-import District from '../models/District'
-export default class DistrictsService {
-  public static async getDistricts({
+import SubDistricts from '../models/Subdistricts'
+
+export default class SubDistrictsService {
+  public static async getSubDistricts({
     title_th,
-    provinceCode
+    districtCode
   }: {
     title_th?: string
-    provinceCode: string
+    districtCode: string
   }): Promise<any> {
     try {
       const filterOption: FilterQuery<any> = {
-        'data.province.code': provinceCode
+        'data.district.code': districtCode
       }
       if (title_th) {
         filterOption['data.title.title_th'] = {
@@ -18,10 +19,10 @@ export default class DistrictsService {
           $options: 'i'
         }
       }
-      const districts = await District.find(filterOption)
+      const subdistricts = await SubDistricts.find(filterOption)
         .sort({ 'data.title.title_th': 'asc' })
         .select(['data.id', 'data.title.title_th', 'data.title.title_en'])
-      return districts
+      return subdistricts
     } catch (error) {
       console.error(error)
       throw error

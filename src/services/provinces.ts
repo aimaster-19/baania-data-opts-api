@@ -12,6 +12,6 @@ export default class ProvincesService {
     }
     return await Provinces.find(filterOption)
       .sort({ 'data.title.title_th': 'asc' })
-      .select(['data.id', 'data.title.title_th'])
+      .select(['data.id', 'data.title.title_th', 'data.title.title_en'])
   }
 }
