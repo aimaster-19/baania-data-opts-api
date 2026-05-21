@@ -1,117 +1,132 @@
 import mongoose from 'mongoose'
 
 /**
- * DTO: Flat, frontend-friendly shape for creating a project.
- * The API transforms this into the nested MongoDB schema structure.
+ * DTO: Structure matching the JSON payload for Project.
+ * Supports both Create and Update operations.
  */
-export interface CreateProjectDTO {
-  // Matches the frontend FormData exactly
-  name: string
-  type: string
-  address?: string
-  city?: string
-  coordinates?: string
-  description?: string
-  features?: string[]
-  price?: string | number
-  currency?: string
+export interface ProjectPayloadDTO {
+  data?: {
+    address?: Record<string, any>
+    ads?: Record<string, any>
+    detail?: Record<string, any>
+    developer?: Record<string, any>
+    email?: string
+    facebook?: string
+    facility?: Record<string, any>
+    financial?: Record<string, any>
+    footnote?: Record<string, any>
+    general?: Record<string, any>
+    id?: string
+    images?: Record<string, any>
+    info?: {
+      search_keyword?: string
+      code?: string
+      hasBlogic?: boolean
+      posted?: string
+      title_th?: string
+      title_en?: string
+    }
+    line?: string
+    location?: {
+      heading?: string
+      bottom?: string
+      lon?: number
+      right?: string
+      top?: string
+      left?: string
+      lat?: number
+    }
+    meta?: Record<string, any>
+    progress?: Record<string, any>
+    promote?: Record<string, any>
+    property_type?: any[]
+    published?: number
+    selloffice?: Record<string, any>
+    transaction?: any[]
+    uid?: string
+    unittype?: any[]
+    url?: Record<string, any>
+    video?: Record<string, any>
+    website?: string
+    exreview?: string
+    livingscore?: string
+  }
+  geopoint?: {
+    coordinates?: number[]
+    type?: string
+  }
+  isShouldUpdate?: number | string
+  deletedAt?: string | null
 }
 
-/**
- * Validation result returned to the frontend.
- */
+// Alias for backwards compatibility with existing imports
+export type CreateProjectDTO = ProjectPayloadDTO
+
 export interface ValidationResult {
   valid: boolean
   errors: { field: string; message: string }[]
 }
 
-// ── Property type mapping ──────────────────────────────────────────────
-
-interface PropertyTypeEntry {
-  id: number
-  title_th: string
-  title_en: string
-}
-
-const PROPERTY_TYPE_MAP: Record<string, PropertyTypeEntry> = {
-  house: { id: 1, title_th: 'บ้านเดี่ยว', title_en: 'Single House' },
-  condo: { id: 2, title_th: 'คอนโดมิเนียม', title_en: 'Condominium' },
-  townhouse: { id: 3, title_th: 'ทาวน์โฮม', title_en: 'Townhouse' },
-  land: { id: 4, title_th: 'ที่ดิน', title_en: 'Land' }
-}
-
-// ── Facility mapping ───────────────────────────────────────────────────
-
-const FACILITY_MAP: Record<string, { key: string; infoKey: string; type: 'number' | 'string' }> = {
-  สระว่ายน้ำ: { key: 'has_pool', infoKey: 'info_pool', type: 'number' },
-  ฟิตเนส: { key: 'has_fitness', infoKey: 'info_fitness', type: 'number' },
-  สวนหย่อม: { key: 'has_park', infoKey: 'info_park', type: 'string' },
-  'รปภ. 24 ชม.': {
-    key: 'has_security',
-    infoKey: 'info_security',
-    type: 'string'
-  },
-  CCTV: { key: 'has_security', infoKey: 'info_security', type: 'string' },
-  สนามเด็กเล่น: {
-    key: 'has_playground',
-    infoKey: 'info_playground',
-    type: 'number'
-  },
-  ห้องประชุม: { key: 'has_meeting', infoKey: 'info_meeting', type: 'string' },
-  คลับเฮาส์: { key: 'has_clubhouse', infoKey: 'info_clubhouse', type: 'number' }
-}
-
-// ── Validate ───────────────────────────────────────────────────────────
-
-export function validateCreateProject(dto: CreateProjectDTO): ValidationResult {
+/**
+ * Basic, professional validation for the Project JSON payload.
+ * Supports differentiating between Create (isUpdate = false) and Update (isUpdate = true).
+ */
+export function validateProjectPayload(dto: ProjectPayloadDTO, isUpdate = false): ValidationResult {
   const errors: ValidationResult['errors'] = []
 
-  if (!dto.name || typeof dto.name !== 'string' || !dto.name.trim()) {
-    errors.push({ field: 'name', message: 'กรุณากรอกชื่อโครงการ' })
-  } else if (dto.name.trim().length < 2) {
-    errors.push({
-      field: 'name',
-      message: 'ชื่อโครงการต้องมีอย่างน้อย 2 ตัวอักษร'
-    })
-  }
+  if (!isUpdate) {
+    // ── Create Operation Validation ──
+    // Require at least a title in Thai or English
+    if (!dto.data?.info?.title_th?.trim() && !dto.data?.info?.title_en?.trim()) {
+      errors.push({
+        field: 'data.info.title_th',
+        message: 'กรุณาระบุชื่อโครงการอย่างน้อย 1 ภาษา (ไทยหรืออังกฤษ)'
+      })
+    }
 
-  if (!dto.type || !PROPERTY_TYPE_MAP[dto.type]) {
-    errors.push({
-      field: 'type',
-      message: `ประเภทโครงการไม่ถูกต้อง กรุณาเลือก: ${Object.keys(PROPERTY_TYPE_MAP).join(', ')}`
-    })
-  }
-
-  if (dto.coordinates && typeof dto.coordinates === 'string') {
-    const parts = dto.coordinates.split(',').map((p) => parseFloat(p.trim()))
-    if (parts.length === 2) {
-      const [lat, lon] = parts
-      if (isNaN(lat) || lat < -90 || lat > 90) {
+    // Require location coordinates for new projects
+    if (dto.data?.location) {
+      const { lat, lon } = dto.data.location
+      if (lat === undefined || lon === undefined) {
         errors.push({
-          field: 'coordinates',
-          message: 'ละติจูดต้องอยู่ระหว่าง -90 ถึง 90'
-        })
-      }
-      if (isNaN(lon) || lon < -180 || lon > 180) {
-        errors.push({
-          field: 'coordinates',
-          message: 'ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180'
+          field: 'data.location',
+          message: 'กรุณาระบุพิกัดละติจูดและลองจิจูด (lat, lon)'
         })
       }
     } else {
       errors.push({
-        field: 'coordinates',
-        message: 'รูปแบบพิกัดไม่ถูกต้อง (เช่น 13.75, 100.50)'
+        field: 'data.location',
+        message: 'ข้อมูลพิกัดที่ตั้ง (location) เป็นสิ่งจำเป็น'
       })
     }
   }
 
-  if (dto.price !== undefined && dto.price !== '') {
-    const p = Number(dto.price)
-    if (isNaN(p) || p < 0) {
+  // ── Common Validation (Create & Update) ──
+
+  // Validate location coordinates boundaries if they are provided
+  if (dto.data?.location) {
+    const { lat, lon } = dto.data.location
+    if (lat !== undefined && (isNaN(lat) || lat < -90 || lat > 90)) {
+      errors.push({ field: 'data.location.lat', message: 'ละติจูดต้องอยู่ระหว่าง -90 ถึง 90' })
+    }
+    if (lon !== undefined && (isNaN(lon) || lon < -180 || lon > 180)) {
+      errors.push({ field: 'data.location.lon', message: 'ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180' })
+    }
+  }
+
+  // Validate geopoint coordinates if provided
+  if (dto.geopoint?.coordinates && dto.geopoint.coordinates.length === 2) {
+    const [lon, lat] = dto.geopoint.coordinates
+    if (lat !== undefined && (isNaN(lat) || lat < -90 || lat > 90)) {
       errors.push({
-        field: 'price',
-        message: 'ราคาเริ่มต้นต้องมากกว่าหรือเท่ากับ 0'
+        field: 'geopoint.coordinates',
+        message: 'ละติจูดของ geopoint ต้องอยู่ระหว่าง -90 ถึง 90'
+      })
+    }
+    if (lon !== undefined && (isNaN(lon) || lon < -180 || lon > 180)) {
+      errors.push({
+        field: 'geopoint.coordinates',
+        message: 'ลองจิจูดของ geopoint ต้องอยู่ระหว่าง -180 ถึง 180'
       })
     }
   }
@@ -119,238 +134,79 @@ export function validateCreateProject(dto: CreateProjectDTO): ValidationResult {
   return { valid: errors.length === 0, errors }
 }
 
-// ── Transform ──────────────────────────────────────────────────────────
+// Alias for backwards compatibility with existing imports
+export const validateCreateProject = (dto: ProjectPayloadDTO) => validateProjectPayload(dto, false)
 
-export function transformToDocument(dto: CreateProjectDTO): Record<string, any> {
+/**
+ * Transforms the JSON payload to perfectly align with the MongoDB document structure.
+ * Supports both creating new documents and formatting update payloads.
+ */
+export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): Record<string, any> {
   const now = Date.now()
-  const propertyType = PROPERTY_TYPE_MAP[dto.type]
+  const isoDate = new Date().toISOString()
 
-  // Parse coordinates
-  let lat = 0
-  let lon = 0
-  if (dto.coordinates) {
-    const parts = dto.coordinates.split(',').map((p) => parseFloat(p.trim()))
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      lat = parts[0]
-      lon = parts[1]
+  // Clone to prevent mutating the original request payload
+  const document: Record<string, any> = JSON.parse(JSON.stringify(dto))
+
+  if (!isUpdate) {
+    // ── Create specific fields ──
+    const keyId = new mongoose.Types.ObjectId().toHexString()
+    document._id = new mongoose.Types.ObjectId()
+    document.keyId = keyId
+    document.created = isoDate
+    document.updated = isoDate
+
+    // Ensure 'data' object exists
+    if (!document.data) {
+      document.data = {}
+    }
+    document.data.created = now
+    document.data.updated = now
+
+    // Initialize required internal logic fields if missing
+    if (!document.data.info) document.data.info = {}
+    if (!document.data.info.code) {
+      document.data.info.code = keyId.slice(-8).toUpperCase()
+    }
+    if (!document.data.info.posted) {
+      document.data.info.posted = isoDate
+    }
+  } else {
+    // ── Update specific fields ──
+    document.updated = isoDate
+    if (document.data) {
+      document.data.updated = now
+    }
+    // Prevent overriding unchangeable fields during update
+    delete document._id
+    delete document.keyId
+    delete document.created
+    if (document.data) {
+      delete document.data.created
     }
   }
 
-  // Parse price
-  const priceStart = dto.price ? Number(dto.price) : 0
-
-  // Build facility object
-  const facility: Record<string, any> = {}
-  if (dto.features && dto.features.length > 0) {
-    for (const feature of dto.features) {
-      const mapping = FACILITY_MAP[feature]
-      if (mapping) {
-        // Apply the correct type required by the Mongoose schema
-        facility[mapping.key] = mapping.type === 'number' ? 1 : '1'
-        facility[mapping.infoKey] = feature
+  // ── Sync Geopoint with Location ──
+  // If location is provided but geopoint is not set properly, automatically generate the GeoJSON Point
+  if (document.data?.location?.lat !== undefined && document.data?.location?.lon !== undefined) {
+    if (
+      !document.geopoint ||
+      !document.geopoint.coordinates ||
+      document.geopoint.coordinates.length !== 2
+    ) {
+      document.geopoint = {
+        type: 'Point',
+        coordinates: [document.data.location.lon, document.data.location.lat]
       }
     }
   }
 
-  const keyId = new mongoose.Types.ObjectId().toHexString()
-  const isoDate = new Date().toISOString()
-
-  // Create document perfectly matched with mongooseProjectReadSchema
-  const document: Record<string, any> = {
-    _id: new mongoose.Types.ObjectId(),
-    keyId,
-    created: isoDate,
-    updated: isoDate,
-    isShouldUpdate: '0',
-    deletedAt: null,
-    data: {
-      address: {
-        address_en: '',
-        address_th: dto.address?.trim() || '',
-        district_en: '',
-        district_id: 0,
-        district_th: '',
-        landzone: { id: '', name: '' },
-        nearby: '',
-        neighbors: '',
-        postcode: 0,
-        province_en: '',
-        province_id: 0,
-        province_th: dto.city?.trim() || '',
-        subdistrict_en: '',
-        subdistrict_id: 0,
-        subdistrict_th: '',
-        transport: ''
-      },
-      ads: {
-        has_retarket_ads: false,
-        retarget_content_id: '',
-        retarget_facebook_content_type: '',
-        retarget_google_content_type: '',
-        retarget_price_start: ''
-      },
-      created: now,
-      detail: {
-        area_shared: '',
-        area_total: { ngan: 0, rai: 0, wa: 0 },
-        insurance_condition: '',
-        num_floor: 0,
-        num_lift: '',
-        num_lift_service: '',
-        num_parking: '',
-        num_unit: 0,
-        num_unit_type: '',
-        ratio_parking: ''
-      },
-      developer: {
-        address: '',
-        bank_id: '',
-        branch: '',
-        business_segment: '',
-        capital: 0,
-        contact_info: '',
-        department: '',
-        director: '',
-        display_name: '',
-        email: '',
-        id: '',
-        image: { alt: '', thumbnail: '', title: '', url: '' },
-        keyId: '',
-        location: {
-          bottom: '',
-          lat: '',
-          left: '',
-          lon: '',
-          right: '',
-          top: ''
-        },
-        reg_num: '',
-        title_en: '',
-        title_th: '',
-        website: ''
-      },
-      email: '',
-      exreview: '',
-      facebook: '',
-      facility: Object.keys(facility).length > 0 ? facility : undefined,
-      financial: {
-        insurance_cost: '',
-        not_show_start_price: false,
-        num_yield: '',
-        price_end: '',
-        price_end_per_unit: '',
-        price_facility: '',
-        price_land: '',
-        price_start: isNaN(priceStart) ? 0 : priceStart,
-        price_start_per_unit: '',
-        ratio_yield: '',
-        start_price_not_found: false,
-        unitof_price_facility: ''
-      },
-      footnote: {
-        info_designer: '',
-        info_financial: '',
-        info_land_id: '',
-        info_landlord: '',
-        info_landzone: '',
-        info_license_id: '',
-        info_shared_prop: ''
-      },
-      general: {
-        building_amount: '',
-        detail: dto.description?.trim() || '',
-        highlight: '',
-        mgnt_status: '',
-        promotion: '',
-        promotion_start: '',
-        promotion_stop: '',
-        slogan: '',
-        status: 'draft'
-      },
-      id: '',
-      images: {
-        main: {
-          thumbnail: '',
-          title: '',
-          url: '',
-          webp_main: '',
-          webp_thumbnail: ''
-        },
-        map: { thumbnail: '', title: '', url: '' },
-        nearby: '',
-        overall: [],
-        project: { thumbnail: '', title: '', url: '' }
-      },
-      info: {
-        code: keyId.slice(-8).toUpperCase(),
-        hasBlogic: false,
-        posted: isoDate,
-        search_keyword: dto.name.trim(),
-        title_en: '',
-        title_th: dto.name.trim()
-      },
-      line: '',
-      livingscore: '',
-      location: {
-        bottom: '',
-        heading: '',
-        lat: lat,
-        left: '',
-        lon: lon,
-        right: '',
-        top: ''
-      },
-      meta: {
-        meta_description: '',
-        meta_keywords: ''
-      },
-      progress: {
-        date_finish: '',
-        date_start: '',
-        progress_architect: '',
-        progress_overall: '',
-        progress_structure: '',
-        progress_system: '',
-        progress_wiring: ''
-      },
-      promote: {
-        promote_comment: '',
-        promote_compare: 0,
-        promote_end_date: 0,
-        promote_level: 0,
-        promote_list: 0,
-        promote_map: 0,
-        promote_recommend: 0,
-        promote_review: 0,
-        promote_search: 0,
-        promote_start_date: 0
-      },
-      property_type: propertyType ? [propertyType] : [],
-      published: 0,
-      selloffice: {
-        address_selloffice: '',
-        contact_number: ''
-      },
-      transaction: [],
-      uid: '',
-      unittype: [],
-      updated: now,
-      url: {
-        alias_en: '',
-        alias_th: ''
-      },
-      video: {
-        aerial: { thumbnail: '', title: '', url: '' },
-        customer: { thumbnail: '', title: '', url: '' },
-        video: { thumbnail: '', title: '', url: '' }
-      },
-      website: ''
-    }
-  }
-
-  // Only add geopoint if valid coordinates exist
-  if (lat !== 0 || lon !== 0) {
-    document.geopoint = { type: 'Point', coordinates: [lon, lat] }
+  // ── Final Formatting ──
+  // Ensure isShouldUpdate is a string for Mongoose schema compatibility
+  if (document.isShouldUpdate === undefined) {
+    document.isShouldUpdate = isUpdate ? '1' : '0'
+  } else {
+    document.isShouldUpdate = String(document.isShouldUpdate)
   }
 
   return document

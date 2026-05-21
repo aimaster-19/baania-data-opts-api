@@ -4,7 +4,8 @@ import {
   CreateProjectDTO,
   validateCreateProject,
   transformToDocument,
-  ValidationResult
+  ValidationResult,
+  validateProjectPayload
 } from '../interfaces/createProjectDTO'
 
 /**
@@ -48,7 +49,7 @@ export class ProjectReadService {
       return { success: false, validation }
     }
 
-    // 2. Transform flat DTO → nested document
+    // 2. Transform JSON DTO → completely formatted nested document
     const document = transformToDocument(dto)
 
     // 3. Save
@@ -105,9 +106,25 @@ export class ProjectReadService {
 
   /**
    * Update a project by _id and return the updated document.
+   * Performs validation and payload transformation before updating.
    */
-  public static async updateProjectRead(id: string, data: any) {
-    return await ProjectRead.findByIdAndUpdate(id, data, { new: true })
+  public static async updateProjectRead(
+    id: string,
+    dto: any
+  ): Promise<{ success: true; data: any } | { success: false; validation: ValidationResult }> {
+    // 1. Validate for update
+    const validation = validateProjectPayload(dto, true)
+    if (!validation.valid) {
+      return { success: false, validation }
+    }
+
+    // 2. Transform payload for update
+    const updateData = transformToDocument(dto, true)
+
+    // 3. Update document in DB
+    const updated = await ProjectRead.findByIdAndUpdate(id, updateData, { new: true })
+
+    return { success: true, data: updated }
   }
 
   /**

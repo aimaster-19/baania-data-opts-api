@@ -4,7 +4,6 @@ import DevelopersService from '../services/developer'
 export async function getDevelopersController(req: Request, res: Response): Promise<void> {
   try {
     const { limit, title_th } = req.query
-    console.log('title_th', req.query)
     const developers = await DevelopersService.getDevelopers({
       title_th: title_th as string,
       limit: limit ? Number(limit) : undefined
