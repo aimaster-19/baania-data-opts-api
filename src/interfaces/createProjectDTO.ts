@@ -209,5 +209,16 @@ export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): R
     document.isShouldUpdate = String(document.isShouldUpdate)
   }
 
+  // Normalize deletedAt: an empty/whitespace value means "not deleted" -> null.
+  // The list filter matches { deletedAt: null }, and MongoDB's $eq: null does
+  // not match an empty string, so records saved with "" would be hidden.
+  if (
+    document.deletedAt === undefined ||
+    document.deletedAt === '' ||
+    (typeof document.deletedAt === 'string' && document.deletedAt.trim() === '')
+  ) {
+    document.deletedAt = null
+  }
+
   return document
 }
