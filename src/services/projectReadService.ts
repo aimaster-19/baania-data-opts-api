@@ -128,9 +128,27 @@ export class ProjectReadService {
   }
 
   /**
-   * Soft- or hard-delete a project by _id.
+   * Soft-delete a project by _id.
+   * Instead of removing the document, flag it as deleted so it is excluded
+   * from the list view (which filters on `deletedAt: null`) but kept in the DB.
+   *   - deletedAt      -> current timestamp (marks the record as deleted)
+   *   - isShouldUpdate -> '1' (schema stores this as a string)
+   *   - data.published -> 0 (unpublish)
+   * Returns the updated document, or null when the id does not exist.
    */
   public static async deleteProjectRead(id: string) {
-    return await ProjectRead.findByIdAndDelete(id)
+    return await ProjectRead.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          deletedAt: Date.now(),
+          isShouldUpdate: '1',
+          'data.published': 0,
+          updated: new Date().toISOString(),
+          'data.updated': Date.now()
+        }
+      },
+      { new: true }
+    )
   }
 }
