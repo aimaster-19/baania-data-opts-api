@@ -6,6 +6,7 @@ import { protect } from '../middlewares/authMiddleware'
 import { getMe } from '../controllers/authController'
 import locationRoutes from './locationsRouters'
 import ortherRoutes from './ortherRouters'
+import uploadRoutes from './uploadRoutes'
 
 const router = Router()
 
@@ -20,6 +21,7 @@ router.get(`/${apiVersion}/me`, protect, getMe)
 
 // You can easily add more routes here, e.g.:
 router.use(`/${apiVersion}/projectread`, projectReadRoutes)
+router.use(`/${apiVersion}/upload`, uploadRoutes)
 router.use(`/${apiVersion}`, locationRoutes)
 router.use(`/${apiVersion}`, ortherRoutes)
 // router.use('/users', userRoutes);
