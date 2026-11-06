@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { IUser } from '../models/User'
+import { JWT_SECRET } from '../config/env'
 
 export interface AuthRequest extends Request {
   user?: IUser
@@ -25,7 +26,7 @@ export const protect = async (
 
   try {
     // Verify token and extract full user payload directly
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'JWT_SECRETKEY') as IUser
+    const decoded = jwt.verify(token, JWT_SECRET) as IUser
 
     // Attach decoded user directly to req.user (avoids extra database roundtrips)
     req.user = decoded

@@ -1,5 +1,6 @@
 import Developers from '../models/Developers'
 import { FilterQuery } from 'mongoose'
+import { escapeRegex } from '../utils/escapeRegex'
 
 export default class DevelopersService {
   public static async getDevelopers({
@@ -13,7 +14,7 @@ export default class DevelopersService {
       const filterOption: FilterQuery<any> = {}
       if (title_th) {
         filterOption['data.title'] = {
-          $regex: `^${title_th}`,
+          $regex: `^${escapeRegex(title_th)}`,
           $options: 'i'
         }
       }

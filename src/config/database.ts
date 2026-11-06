@@ -16,7 +16,10 @@ const AppDataSource = new DataSource({
   username: process.env.POSTGRES_USERNAME,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DATABASE,
-  synchronize: false, // Temporarily enable to sync schema changes
+  // IMPORTANT: Never enable auto-sync. Schema changes must go through
+  // explicit, reviewed migrations — synchronize:true can drop/alter
+  // production columns. Keep this `false`.
+  synchronize: false,
   logging: false,
   entities: [Admin, Banner, BannerGroup, TrackingLog],
   subscribers: [],

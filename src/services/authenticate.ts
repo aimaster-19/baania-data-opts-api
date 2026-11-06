@@ -23,44 +23,4 @@ export default class AuthenticateService {
 
     return updatedAdmin
   }
-
-  // Adding loginFirebase for completeness from reference
-  public static async loginFirebase(decodedToken: any): Promise<any> {
-    const { email, name, picture, uid, firebase } = decodedToken
-
-    const admin = await Admin.findOne({
-      where: { email },
-      withDeleted: false,
-      order: { id: 'DESC' }
-    })
-    if (!admin?.id) {
-      throw { errMessage: 'admin does not exists' }
-    }
-
-    let adminData = {} as Admin
-    if (admin.status !== 'active' && admin.lastLoginDate === null) {
-      adminData = {
-        name: name,
-        pictureUrl: picture,
-        firebaseUid: uid,
-        firebaseType: firebase.sign_in_provider,
-        status: 'active',
-        lastLoginDate: new Date()
-      } as Admin
-    } else {
-      adminData = {
-        lastLoginDate: new Date()
-      } as Admin
-    }
-
-    // Update the admin record
-    await Admin.update({ id: admin.id }, adminData)
-
-    // Fetch and return the updated record in a single query
-    const updatedAdmin = await Admin.findOne({
-      where: { id: admin.id }
-    })
-
-    return updatedAdmin
-  }
 }

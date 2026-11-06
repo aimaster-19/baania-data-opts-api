@@ -1,5 +1,6 @@
 import { FilterQuery } from 'mongoose'
 import SubDistricts from '../models/Subdistricts'
+import { escapeRegex } from '../utils/escapeRegex'
 
 export default class SubDistrictsService {
   public static async getSubDistricts({
@@ -15,7 +16,7 @@ export default class SubDistrictsService {
       }
       if (title_th) {
         filterOption['data.title.title_th'] = {
-          $regex: `^${title_th}`,
+          $regex: `^${escapeRegex(title_th)}`,
           $options: 'i'
         }
       }

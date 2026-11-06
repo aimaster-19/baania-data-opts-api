@@ -1,12 +1,13 @@
 import { FilterQuery } from 'mongoose'
 import Provinces from '../models/Provinces'
+import { escapeRegex } from '../utils/escapeRegex'
 
 export default class ProvincesService {
   public static async getProvinces(title_th: string) {
     const filterOption: FilterQuery<any> = {}
     if (title_th) {
       filterOption['data.title.title_th'] = {
-        $regex: `^${title_th}`,
+        $regex: `^${escapeRegex(title_th)}`,
         $options: 'i'
       }
     }

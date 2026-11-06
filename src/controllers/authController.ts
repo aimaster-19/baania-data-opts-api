@@ -4,6 +4,7 @@ import { AuthRequest } from '../middlewares/authMiddleware'
 import { Admin } from '../entities/postgres/Admin'
 import BaaniaService from '../services/baaniaService'
 import AuthenticateService from '../services/authenticate'
+import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config/env'
 
 // @desc    Get current logged in user
 // @route   GET /api/auth/me
@@ -12,53 +13,6 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     // req.user is already populated from the token by AuthMiddleware
     res.status(200).json({ status: 200, user: req.user })
-  } catch (error: any) {
-    res.status(500).json({ status: 500, message: error.message })
-  }
-}
-
-// @desc    Auth user via Firebase
-// @route   POST /api/auth/login-firebase
-// @access  Public
-export const loginFirebase = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { decodedToken } = req.body
-
-    if (!decodedToken) {
-      res.status(400).json({ status: 400, message: 'decodedToken is required' })
-      return
-    }
-
-    const admin = await Admin.findOne({
-      where: { firebaseUid: decodedToken.uid }
-    })
-
-    if (!admin) {
-      res.status(404).json({ status: 404, message: 'Admin not found' })
-      return
-    }
-
-    const accessToken = jwt.sign(
-      { id: admin.id, email: admin.email },
-      process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' }
-    )
-
-    const refreshToken = jwt.sign(
-      { id: admin.id },
-      process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' }
-    )
-
-    admin.refreshTokens = refreshToken
-    await admin.save()
-
-    res.status(200).json({
-      status: 200,
-      token: accessToken,
-      refreshToken,
-      payload: { id: admin.id, email: admin.email }
-    })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
   }
@@ -103,24 +57,18 @@ export const loginEmail = async (req: Request, res: Response): Promise<void> => 
       return
     }
 
-    const accessToken = jwt.sign(
-      { id: admin.id, email: admin.email },
-      process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' }
-    )
+    const accessToken = jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, {
+      expiresIn: '15m'
+    })
 
-    const refreshToken = jwt.sign(
-      { id: admin.id },
-      process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' }
-    )
+    const refreshToken = jwt.sign({ id: admin.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' })
 
     admin.refreshTokens = refreshToken
     await admin.save()
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, //process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     })
@@ -153,7 +101,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     let decoded: any
 
     try {
-      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY')
+      decoded = jwt.verify(token, JWT_REFRESH_SECRET)
     } catch {
       res.status(401).json({
         status: 401,
@@ -174,24 +122,18 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       return
     }
 
-    const newAccessToken = jwt.sign(
-      { id: admin.id, email: admin.email },
-      process.env.JWT_SECRET || 'JWT_SECRETKEY',
-      { expiresIn: '15m' }
-    )
+    const newAccessToken = jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, {
+      expiresIn: '15m'
+    })
 
-    const newRefreshToken = jwt.sign(
-      { id: admin.id },
-      process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRETKEY',
-      { expiresIn: '7d' }
-    )
+    const newRefreshToken = jwt.sign({ id: admin.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' })
 
     admin.refreshTokens = newRefreshToken
     await admin.save()
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: false, // process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     })
