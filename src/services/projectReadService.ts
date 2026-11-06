@@ -151,4 +151,31 @@ export class ProjectReadService {
       { new: true }
     )
   }
+
+  /**
+   * Update only the publish status of a project by _id.
+   *   - data.published -> published (0 = unpublished, 1 = published)
+   *   - isShouldUpdate -> '1' (schema stores this as a string)
+   *   - updated / data.updated -> current timestamp
+   *
+   * Note: the schema has no `updated_at` field, so the update timestamp is
+   * stored in `updated` (ISO string) and `data.updated` (epoch ms), matching
+   * the rest of the codebase.
+   *
+   * Returns the updated document, or null when the id does not exist.
+   */
+  public static async updateStatusProject(id: string, published: 0 | 1) {
+    return await ProjectRead.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          'data.published': published,
+          isShouldUpdate: '1',
+          updated: new Date().toISOString(),
+          'data.updated': Date.now()
+        }
+      },
+      { new: true }
+    )
+  }
 }

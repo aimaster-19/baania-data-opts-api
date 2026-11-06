@@ -4,6 +4,7 @@ import {
   getProjectReads,
   getProjectReadById,
   updateProjectRead,
+  updateStatusProjects,
   deleteProjectRead
 } from '../controllers/projectReadController'
 import { protect } from '../middlewares/authMiddleware'
@@ -15,6 +16,7 @@ router.post('/add', protect, createProjectRead)
 router.get('/list', protect, getProjectReads)
 router.get('/id/:id', protect, getProjectReadById)
 router.put('/update/:id', protect, updateProjectRead)
+router.patch('/status/:id', protect, updateStatusProjects)
 router.delete('/delete/:id', protect, deleteProjectRead)
 
 export default router

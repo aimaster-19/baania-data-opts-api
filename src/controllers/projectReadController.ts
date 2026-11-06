@@ -176,6 +176,37 @@ export const updateProjectRead = async (req: Request, res: Response) => {
   }
 }
 
+/**
+ * PATCH /projectread/status/:id
+ *
+ * Update only the publish status of a project.
+ * Body (JSON):
+ *   published - 0 (unpublish) | 1 (publish)   (required)
+ */
+export const updateStatusProjects = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+
+    // Accept number or numeric string, but only 0 or 1
+    const raw = req.body?.published
+    const published = Number(raw)
+    if (raw === undefined || raw === null || raw === '' || (published !== 0 && published !== 1)) {
+      return res.status(422).json({
+        status: 422,
+        message: 'กรุณาระบุ published เป็น 0 หรือ 1 เท่านั้น'
+      })
+    }
+
+    const project = await ProjectReadService.updateStatusProject(id, published as 0 | 1)
+    if (!project) {
+      return res.status(404).json({ status: 404, message: 'ProjectRead not found' })
+    }
+    res.status(200).json({ status: 200, data: project })
+  } catch (error: any) {
+    res.status(500).json({ status: 500, message: error.message })
+  }
+}
+
 export const deleteProjectRead = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
