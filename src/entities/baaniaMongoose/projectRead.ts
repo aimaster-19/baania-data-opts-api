@@ -99,7 +99,9 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       info_clubhouse: { type: String },
       has_clubhouse: { type: Number },
       info_park: { type: String },
-      has_service_bus: { type: String }
+      has_service_bus: { type: String },
+      info_service_bus: { type: String },
+      has_other: { type: Number }
     },
     financial: {
       price_land: { type: String },
@@ -193,6 +195,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
       progress_overall: { type: String },
       progress_system: { type: String },
       date_start: { type: String },
+      date_construction: { type: String },
       progress_architect: { type: String },
       date_finish: { type: String },
       progress_structure: { type: String },

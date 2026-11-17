@@ -25,6 +25,8 @@ function buildFilter(query: Record<string, any>): Record<string, any> {
     // Escape special regex characters to prevent injection
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     filter.$or = [
+      { keyId: { $regex: escaped, $options: 'i' } },
+      { 'data.id': { $regex: escaped, $options: 'i' } },
       { 'data.info.title_th': { $regex: escaped, $options: 'i' } },
       { 'data.info.title_en': { $regex: escaped, $options: 'i' } },
       { 'data.info.code': { $regex: escaped, $options: 'i' } },
@@ -45,8 +47,20 @@ function buildFilter(query: Record<string, any>): Record<string, any> {
     filter['data.general.status'] = query.status
   }
 
-  // Exclude soft-deleted documents
-  filter.deletedAt = { $eq: null }
+  // --- Publish status filter (data.published: 0 = offline) ---
+  if (query.publishStatus === 'online') {
+    filter['data.published'] = { $nin: [0, null] }
+  } else if (query.publishStatus === 'offline') {
+    filter['data.published'] = { $in: [0, null] }
+  }
+
+  // --- Soft-delete filter ---
+  // deleted=true -> show only deleted; otherwise exclude soft-deleted documents
+  if (query.deleted === 'true' || query.deleted === true) {
+    filter.deletedAt = { $ne: null }
+  } else {
+    filter.deletedAt = { $eq: null }
+  }
 
   return filter
 }
