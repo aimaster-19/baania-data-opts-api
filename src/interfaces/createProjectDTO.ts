@@ -142,7 +142,10 @@ export const validateCreateProject = (dto: ProjectPayloadDTO) => validateProject
  * Supports both creating new documents and formatting update payloads.
  */
 export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): Record<string, any> {
-  const now = Date.now()
+  // Timestamps are stored as epoch SECONDS (number) to match the upstream
+  // pipeline. Both top-level `created`/`updated` and `data.created`/`data.updated`
+  // use the same unit so sorting and downstream consumers stay consistent.
+  const nowSec = Math.floor(Date.now() / 1000)
   const isoDate = new Date().toISOString()
 
   // Clone to prevent mutating the original request payload
@@ -153,15 +156,15 @@ export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): R
     const keyId = new mongoose.Types.ObjectId().toHexString()
     document._id = new mongoose.Types.ObjectId()
     document.keyId = keyId
-    document.created = isoDate
-    document.updated = isoDate
+    document.created = nowSec
+    document.updated = nowSec
 
     // Ensure 'data' object exists
     if (!document.data) {
       document.data = {}
     }
-    document.data.created = now
-    document.data.updated = now
+    document.data.created = nowSec
+    document.data.updated = nowSec
 
     // Initialize required internal logic fields if missing
     if (!document.data.info) document.data.info = {}
@@ -173,9 +176,9 @@ export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): R
     }
   } else {
     // ── Update specific fields ──
-    document.updated = isoDate
+    document.updated = nowSec
     if (document.data) {
-      document.data.updated = now
+      document.data.updated = nowSec
     }
     // Prevent overriding unchangeable fields during update
     delete document._id
@@ -202,11 +205,12 @@ export function transformToDocument(dto: ProjectPayloadDTO, isUpdate = false): R
   }
 
   // ── Final Formatting ──
-  // Ensure isShouldUpdate is a string for Mongoose schema compatibility
+  // isShouldUpdate is a numeric flag (0 | 1) to match the pipeline. Storing it
+  // as a string broke strict-equality checks in downstream sync consumers.
   if (document.isShouldUpdate === undefined) {
-    document.isShouldUpdate = isUpdate ? '1' : '0'
+    document.isShouldUpdate = isUpdate ? 1 : 0
   } else {
-    document.isShouldUpdate = String(document.isShouldUpdate)
+    document.isShouldUpdate = Number(document.isShouldUpdate)
   }
 
   // Normalize deletedAt: an empty/whitespace value means "not deleted" -> null.

@@ -2,7 +2,10 @@ import mongoose from 'mongoose'
 
 export const mongooseProjectReadSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
-  created: { type: String },
+  // Stored as epoch SECONDS (number) to match the upstream pipeline. The
+  // previous `String` type caused Mongoose to cast writes back to strings,
+  // producing mixed number/string values and breaking sort by `updated`.
+  created: { type: Number },
   data: {
     address: {
       subdistrict_en: { type: String },
@@ -297,6 +300,8 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
   },
   isShouldUpdate: { type: Number },
   keyId: { type: String },
-  updated: { type: String },
-  deletedAt: { type: String }
+  // epoch SECONDS (number), matching the pipeline and `created` above.
+  updated: { type: Number },
+  // epoch SECONDS (number) when soft-deleted, or null when active.
+  deletedAt: { type: Number }
 })

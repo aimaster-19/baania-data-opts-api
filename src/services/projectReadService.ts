@@ -131,21 +131,22 @@ export class ProjectReadService {
    * Soft-delete a project by _id.
    * Instead of removing the document, flag it as deleted so it is excluded
    * from the list view (which filters on `deletedAt: null`) but kept in the DB.
-   *   - deletedAt      -> current timestamp (marks the record as deleted)
-   *   - isShouldUpdate -> '1' (schema stores this as a string)
+   *   - deletedAt      -> epoch seconds (marks the record as deleted)
+   *   - isShouldUpdate -> 1 (numeric flag, matches the pipeline)
    *   - data.published -> 0 (unpublish)
    * Returns the updated document, or null when the id does not exist.
    */
   public static async deleteProjectRead(id: string) {
+    const nowSec = Math.floor(Date.now() / 1000)
     return await ProjectRead.findByIdAndUpdate(
       id,
       {
         $set: {
-          deletedAt: Date.now(),
+          deletedAt: nowSec,
           isShouldUpdate: 1,
           'data.published': 0,
-          updated: new Date().toISOString(),
-          'data.updated': Date.now()
+          updated: nowSec,
+          'data.updated': nowSec
         }
       },
       { new: true }
@@ -155,24 +156,25 @@ export class ProjectReadService {
   /**
    * Update only the publish status of a project by _id.
    *   - data.published -> published (0 = unpublished, 1 = published)
-   *   - isShouldUpdate -> '1' (schema stores this as a string)
-   *   - updated / data.updated -> current timestamp
+   *   - isShouldUpdate -> 1 (numeric flag, matches the pipeline)
+   *   - updated / data.updated -> current timestamp (epoch seconds)
    *
    * Note: the schema has no `updated_at` field, so the update timestamp is
-   * stored in `updated` (ISO string) and `data.updated` (epoch ms), matching
-   * the rest of the codebase.
+   * stored in `updated` and `data.updated` as epoch SECONDS, matching the
+   * pipeline and the rest of the codebase.
    *
    * Returns the updated document, or null when the id does not exist.
    */
   public static async updateStatusProject(id: string, published: 0 | 1) {
+    const nowSec = Math.floor(Date.now() / 1000)
     return await ProjectRead.findByIdAndUpdate(
       id,
       {
         $set: {
           'data.published': published,
           isShouldUpdate: 1,
-          updated: new Date().toISOString(),
-          'data.updated': Date.now()
+          updated: nowSec,
+          'data.updated': nowSec
         }
       },
       { new: true }
