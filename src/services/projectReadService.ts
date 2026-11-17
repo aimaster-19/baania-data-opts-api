@@ -142,7 +142,7 @@ export class ProjectReadService {
       {
         $set: {
           deletedAt: Date.now(),
-          isShouldUpdate: '1',
+          isShouldUpdate: 1,
           'data.published': 0,
           updated: new Date().toISOString(),
           'data.updated': Date.now()
@@ -170,7 +170,7 @@ export class ProjectReadService {
       {
         $set: {
           'data.published': published,
-          isShouldUpdate: '1',
+          isShouldUpdate: 1,
           updated: new Date().toISOString(),
           'data.updated': Date.now()
         }

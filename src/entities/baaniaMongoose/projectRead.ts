@@ -126,9 +126,11 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
     },
     general: {
       building_amount: { type: String },
+      building_description: { type: String },
       highlight: { type: String },
       mgnt_status: { type: String },
       promotion: { type: String },
+      info_rationeccomend: { type: String },
       promotion_start: { type: String },
       promotion_stop: { type: String },
       slogan: { type: String },
@@ -290,7 +292,7 @@ export const mongooseProjectReadSchema = new mongoose.Schema({
     coordinates: [{ type: Number }],
     type: { type: String }
   },
-  isShouldUpdate: { type: String },
+  isShouldUpdate: { type: Number },
   keyId: { type: String },
   updated: { type: String },
   deletedAt: { type: String }
