@@ -13,8 +13,9 @@ export default class DevelopersService {
     try {
       const filterOption: FilterQuery<any> = {}
       if (title_th) {
+        // ค้นหาแบบ contains (ไม่ anchor หัว) เพื่อให้หาคำกลาง/คำท้ายเจอ
         filterOption['data.title'] = {
-          $regex: `^${escapeRegex(title_th)}`,
+          $regex: escapeRegex(title_th),
           $options: 'i'
         }
       }
