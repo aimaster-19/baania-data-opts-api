@@ -2,6 +2,7 @@ import { Router } from 'express'
 import authRoutes from './authRoutes'
 import versionRoutes from './versionRoutes'
 import projectReadRoutes from './projectReadRoutes'
+import unittypeRoutes from './unittypeRoutes'
 import { protect } from '../middlewares/authMiddleware'
 import { getMe } from '../controllers/authController'
 import locationRoutes from './locationsRouters'
@@ -21,6 +22,7 @@ router.get(`/${apiVersion}/me`, protect, getMe)
 
 // You can easily add more routes here, e.g.:
 router.use(`/${apiVersion}/projectread`, projectReadRoutes)
+router.use(`/${apiVersion}/unittype`, unittypeRoutes)
 router.use(`/${apiVersion}/upload`, uploadRoutes)
 router.use(`/${apiVersion}`, locationRoutes)
 router.use(`/${apiVersion}`, ortherRoutes)
