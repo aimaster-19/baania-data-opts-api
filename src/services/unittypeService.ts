@@ -264,10 +264,16 @@ export class UnittypeService {
   }
 
   /**
-   * Fetch a single unittype by its MongoDB _id.
+   * Fetch a single unittype by its MongoDB _id, or fall back to keyId.
+   * (embedded project.unittype[] references use unittype_keyId, which may be
+   * a non-ObjectId string such as "unittype_50059".)
    */
   public static async getUnittypeById(id: string) {
-    return await Unittype.findById(id)
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const byId = await Unittype.findById(id)
+      if (byId) return byId
+    }
+    return await Unittype.findOne({ keyId: id, deletedAt: { $eq: null } })
   }
 
   /**
