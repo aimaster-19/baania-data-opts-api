@@ -266,7 +266,8 @@ export const mongooseUnittypeSchema = new mongoose.Schema({
 
     // All fields are null in the sample (feature flags / free-text notes);
     // typed as Mixed so real string/number/boolean values are stored as-is.
-    facility: { type: Mixed },
+    // Defaults to null when the payload omits it.
+    facility: { type: Mixed, default: null },
 
     transaction: []
   }

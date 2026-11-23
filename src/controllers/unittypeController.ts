@@ -25,7 +25,8 @@ function buildFilter(query: Record<string, any>): Record<string, any> {
       { 'data.info.title_th': { $regex: escaped, $options: 'i' } },
       { 'data.info.title_en': { $regex: escaped, $options: 'i' } },
       { 'data.project.title_th': { $regex: escaped, $options: 'i' } },
-      { 'data.project.code': { $regex: escaped, $options: 'i' } }
+      { 'data.project.code': { $regex: escaped, $options: 'i' } },
+      { 'data.project.project_keyId': { $regex: escaped, $options: 'i' } }
     ]
   }
 

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { UploadService } from '../services/uploadService'
+import { resolveUploadFolder } from '../config/s3'
 
 /**
  * POST /upload/images
@@ -12,8 +13,10 @@ import { UploadService } from '../services/uploadService'
  *   - allowed types: .png .jpg .jpeg .webp
  *   - max size: 5 MB per file
  *
- * Optional query/body:
- *   folder - override the S3 sub-folder (e.g. "projects")
+ * Target folder (query or body):
+ *   type - whitelisted upload target: "project" | "unittype"
+ *          -> b20/project/main | b20/unittype/main
+ *          Unknown/missing falls back to the default S3_FOLDER.
  */
 export const uploadImagesController = async (req: Request, res: Response) => {
   try {
@@ -26,8 +29,9 @@ export const uploadImagesController = async (req: Request, res: Response) => {
       })
     }
 
-    const folder = (req.body?.folder || req.query?.folder) as string | undefined
-    const results = await UploadService.uploadImages(files, folder || undefined)
+    const type = (req.body?.type || req.query?.type) as string | undefined
+    const folder = resolveUploadFolder(type)
+    const results = await UploadService.uploadImages(files, folder)
 
     res.status(201).json({
       status: 201,
