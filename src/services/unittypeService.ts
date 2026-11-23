@@ -176,10 +176,7 @@ export class UnittypeService {
    * primary unittype write is not rolled back by a project-sync problem.
    * Note: this is two separate writes (not an atomic transaction).
    */
-  private static async syncToProject(
-    u: any,
-    mode: 'push' | 'update'
-  ): Promise<ProjectSyncResult> {
+  private static async syncToProject(u: any, mode: 'push' | 'update'): Promise<ProjectSyncResult> {
     const projectKey = u?.data?.project?.project_keyId
     if (!projectKey) {
       return { attempted: false, matched: 0, modified: 0 }
@@ -199,7 +196,12 @@ export class UnittypeService {
           { $set: { 'data.unittype.$': entry, ...touch } }
         )
         if (r.matchedCount > 0) {
-          return { attempted: true, matched: r.matchedCount, modified: r.modifiedCount, mode: 'update' }
+          return {
+            attempted: true,
+            matched: r.matchedCount,
+            modified: r.modifiedCount,
+            mode: 'update'
+          }
         }
         // 2) No existing element -> fall through to push.
       }
