@@ -83,7 +83,7 @@ export const createUnittype = async (req: Request, res: Response) => {
         errors: result.validation.errors
       })
     }
-    res.status(201).json({ status: 201, data: result.data })
+    res.status(201).json({ status: 201, data: result.data, projectSync: result.projectSync })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
   }
@@ -154,7 +154,7 @@ export const updateUnittype = async (req: Request, res: Response) => {
     if (!result.data) {
       return res.status(404).json({ status: 404, message: 'Unittype not found' })
     }
-    res.status(200).json({ status: 200, data: result.data })
+    res.status(200).json({ status: 200, data: result.data, projectSync: result.projectSync })
   } catch (error: any) {
     res.status(500).json({ status: 500, message: error.message })
   }

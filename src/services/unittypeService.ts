@@ -1,6 +1,16 @@
 import mongoose from 'mongoose'
 import Unittype from '../models/Unittype'
+import ProjectRead from '../models/ProjectRead'
 import { PaginationOptions, PaginationMeta } from '../interfaces/pagination'
+
+/** Result of syncing a unittype into its parent project's data.unittype[]. */
+export interface ProjectSyncResult {
+  attempted: boolean // was a project_keyId present to sync against
+  matched: number // project documents matched
+  modified: number // project documents actually modified
+  mode?: 'push' | 'update'
+  error?: string // best-effort: sync never throws, errors are reported here
+}
 
 export interface UnittypePayload {
   data?: Record<string, any>
@@ -129,12 +139,90 @@ export class UnittypeService {
   }
 
   /**
-   * Validate and create a new unittype document.
+   * Build the compact unittype entry stored inside a project's data.unittype[].
+   * Maps the unittype document onto the project's embedded unittype shape.
+   */
+  private static buildProjectUnittypeEntry(u: any): Record<string, any> {
+    const d = u?.data || {}
+    return {
+      unittype_keyId: u?.keyId,
+      id: d.id,
+      title: d.info?.title_th,
+      title_alt: d.info?.title_alt,
+      published: d.published,
+      price_start: d.financial?.price_start,
+      not_show_start_price: d.financial?.not_show_start_price,
+      start_price_not_found: d.financial?.start_price_not_found,
+      num_bed: d.detail?.num_bed,
+      num_bath: d.detail?.num_bath,
+      num_parking: d.detail?.num_parking,
+      num_floor: d.detail?.num_floor,
+      area_usable: d.detail?.area_usable,
+      area_land: d.detail?.area_land,
+      image: d.images?.main,
+      url: d.url
+    }
+  }
+
+  /**
+   * Sync a unittype into its parent project's data.unittype[].
+   *   - mode 'push'   : append the entry (create flow)
+   *   - mode 'update' : replace the matching entry (by unittype_keyId); if the
+   *                     project has no such entry yet, it is pushed instead.
+   * The parent project is located by `data.project.project_keyId` matched
+   * against the project's `keyId` or `data.id`.
+   *
+   * Best-effort: never throws. Any failure is captured in `error` so the
+   * primary unittype write is not rolled back by a project-sync problem.
+   * Note: this is two separate writes (not an atomic transaction).
+   */
+  private static async syncToProject(
+    u: any,
+    mode: 'push' | 'update'
+  ): Promise<ProjectSyncResult> {
+    const projectKey = u?.data?.project?.project_keyId
+    if (!projectKey) {
+      return { attempted: false, matched: 0, modified: 0 }
+    }
+
+    const entry = this.buildProjectUnittypeEntry(u)
+    const nowSec = Math.floor(Date.now() / 1000)
+    const projectFilter = { $or: [{ keyId: projectKey }, { 'data.id': projectKey }] }
+    // Flag the project as changed so downstream consumers re-pick it up.
+    const touch = { isShouldUpdate: 1, updated: nowSec, 'data.updated': nowSec }
+
+    try {
+      if (mode === 'update') {
+        // 1) Try to replace the existing array element in place.
+        const r = await ProjectRead.updateOne(
+          { ...projectFilter, 'data.unittype.unittype_keyId': u.keyId },
+          { $set: { 'data.unittype.$': entry, ...touch } }
+        )
+        if (r.matchedCount > 0) {
+          return { attempted: true, matched: r.matchedCount, modified: r.modifiedCount, mode: 'update' }
+        }
+        // 2) No existing element -> fall through to push.
+      }
+
+      const r = await ProjectRead.updateOne(projectFilter, {
+        $push: { 'data.unittype': entry },
+        $set: touch
+      })
+      return { attempted: true, matched: r.matchedCount, modified: r.modifiedCount, mode: 'push' }
+    } catch (error: any) {
+      return { attempted: true, matched: 0, modified: 0, mode, error: error.message }
+    }
+  }
+
+  /**
+   * Validate and create a new unittype document, then append it to the parent
+   * project's data.unittype[] (best-effort).
    */
   public static async createUnittype(
     payload: UnittypePayload
   ): Promise<
-    { success: true; data: any } | { success: false; validation: UnittypeValidationResult }
+    | { success: true; data: any; projectSync: ProjectSyncResult }
+    | { success: false; validation: UnittypeValidationResult }
   > {
     const validation = this.validate(payload, false)
     if (!validation.valid) {
@@ -143,7 +231,8 @@ export class UnittypeService {
 
     const document = this.transformToDocument(payload, false)
     const saved = await new Unittype(document).save()
-    return { success: true, data: saved }
+    const projectSync = await this.syncToProject(saved, 'push')
+    return { success: true, data: saved, projectSync }
   }
 
   /**
@@ -188,7 +277,8 @@ export class UnittypeService {
     id: string,
     payload: UnittypePayload
   ): Promise<
-    { success: true; data: any } | { success: false; validation: UnittypeValidationResult }
+    | { success: true; data: any; projectSync?: ProjectSyncResult }
+    | { success: false; validation: UnittypeValidationResult }
   > {
     const validation = this.validate(payload, true)
     if (!validation.valid) {
@@ -197,7 +287,13 @@ export class UnittypeService {
 
     const updateData = this.transformToDocument(payload, true)
     const updated = await Unittype.findByIdAndUpdate(id, updateData, { new: true })
-    return { success: true, data: updated }
+    if (!updated) {
+      return { success: true, data: null }
+    }
+
+    // Mirror the change into the parent project's data.unittype[].
+    const projectSync = await this.syncToProject(updated, 'update')
+    return { success: true, data: updated, projectSync }
   }
 
   /**
