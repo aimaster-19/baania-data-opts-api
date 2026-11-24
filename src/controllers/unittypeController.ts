@@ -1,6 +1,10 @@
 import { Request, Response } from 'express'
 import { UnittypeService } from '../services/unittypeService'
 import { PaginationOptions } from '../interfaces/pagination'
+import { asString, isLiteral } from '../utils/queryGuard'
+
+/** Hard cap on the page number to bound Mongo's skip() and prevent large-offset scans. */
+const PAGE_MAX = 10000
 
 /** Sanitize and clamp a numeric query parameter. */
 function toPositiveInt(value: unknown, defaultValue: number, max?: number): number {
@@ -15,10 +19,11 @@ function buildFilter(query: Record<string, any>): Record<string, any> {
   const filter: Record<string, any> = {}
 
   // --- Full-text search ---
-  if (query.search && typeof query.search === 'string' && query.search.trim()) {
-    const keyword = query.search.trim()
-    // Escape regex special characters to prevent injection / ReDoS.
-    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // asString() drops any non-string (e.g. ?search[$ne]=) before it can become
+  // a Mongo operator; the value is then regex-escaped against ReDoS/injection.
+  const search = asString(query.search)
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     filter.$or = [
       { keyId: { $regex: escaped, $options: 'i' } },
       { 'data.id': { $regex: escaped, $options: 'i' } },
@@ -31,27 +36,32 @@ function buildFilter(query: Record<string, any>): Record<string, any> {
   }
 
   // --- List all unit types under a given project ---
-  if (query.projectKeyId) {
-    filter['data.project.project_keyId'] = query.projectKeyId
+  // Every exact-match value goes through asString() so an injected object
+  // ({ $ne }, { $regex }, …) can never reach the query as an operator.
+  const projectKeyId = asString(query.projectKeyId)
+  if (projectKeyId) {
+    filter['data.project.project_keyId'] = projectKeyId
   }
 
   // --- Exact-match filters ---
-  if (query.province) {
-    filter['data.address.province_th'] = query.province
+  const province = asString(query.province)
+  if (province) {
+    filter['data.address.province_th'] = province
   }
-  if (query.status) {
-    filter['data.general.status'] = query.status
+  const status = asString(query.status)
+  if (status) {
+    filter['data.general.status'] = status
   }
 
   // --- Publish status filter ---
-  if (query.publishStatus === 'online') {
+  if (isLiteral(query.publishStatus, 'online')) {
     filter['data.published'] = { $nin: [0, null] }
-  } else if (query.publishStatus === 'offline') {
+  } else if (isLiteral(query.publishStatus, 'offline')) {
     filter['data.published'] = { $in: [0, null] }
   }
 
   // --- Soft-delete filter ---
-  if (query.deleted === 'true' || query.deleted === true) {
+  if (isLiteral(query.deleted, 'true')) {
     filter.deletedAt = { $ne: null }
   } else {
     filter.deletedAt = { $eq: null }
@@ -97,11 +107,11 @@ export const createUnittype = async (req: Request, res: Response) => {
 export const getUnittypes = async (req: Request, res: Response) => {
   try {
     const { query } = req
-    const page = toPositiveInt(query.page, 1)
+    const page = toPositiveInt(query.page, 1, PAGE_MAX)
     const limit = toPositiveInt(query.limit, 20, 100)
 
-    const sortField = ALLOWED_SORT_FIELDS[query.sortBy as string] || 'created'
-    const sortOrder: 1 | -1 = query.order === 'asc' ? 1 : -1
+    const sortField = ALLOWED_SORT_FIELDS[asString(query.sortBy) as string] || 'created'
+    const sortOrder: 1 | -1 = isLiteral(query.order, 'asc') ? 1 : -1
 
     const options: PaginationOptions = {
       page,

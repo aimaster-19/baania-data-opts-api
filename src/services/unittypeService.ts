@@ -85,29 +85,47 @@ export class UnittypeService {
     isUpdate = false
   ): Record<string, any> {
     const nowSec = Math.floor(Date.now() / 1000)
-    const document: Record<string, any> = JSON.parse(JSON.stringify(payload))
+
+    // --- Whitelist client-controllable fields (anti mass-assignment) ---
+    // Only `data` and `geopoint` may come from the request body. Identity and
+    // lifecycle fields (_id, keyId, created, updated, deletedAt, isShouldUpdate)
+    // are set by the server ONLY — never taken from the client, so a request
+    // cannot un-delete a record (deletedAt), flip the pipeline dirty-flag
+    // (isShouldUpdate), or forge identity/timestamps.
+    const source = JSON.parse(JSON.stringify(payload || {}))
+    const data: Record<string, any> =
+      source.data && typeof source.data === 'object' && !Array.isArray(source.data)
+        ? source.data
+        : {}
+    const document: Record<string, any> = { data }
+    if (source.geopoint && typeof source.geopoint === 'object') {
+      document.geopoint = source.geopoint
+    }
 
     if (!isUpdate) {
       const _id = new mongoose.Types.ObjectId()
       const idHex = _id.toHexString()
       document._id = _id
       // keyId is the _id hex unless explicitly supplied (unique, no race).
-      document.keyId = payload.keyId || idHex
+      const suppliedKeyId = typeof source.keyId === 'string' ? source.keyId.trim() : ''
+      document.keyId = suppliedKeyId || idHex
       document.created = nowSec
       document.updated = nowSec
 
-      if (!document.data) document.data = {}
       if (!document.data.id) document.data.id = document.keyId
       document.data.created = nowSec
       document.data.updated = nowSec
+
+      // New records start active; the pipeline dirty-flag begins at 0.
+      document.deletedAt = null
+      document.isShouldUpdate = 0
     } else {
       document.updated = nowSec
-      if (document.data) document.data.updated = nowSec
-      // Never let an update change identity/creation fields.
-      delete document._id
-      delete document.keyId
-      delete document.created
-      if (document.data) delete document.data.created
+      document.data.updated = nowSec
+      // Flag the record for the pipeline to re-pick-up on every edit.
+      document.isShouldUpdate = 1
+      // _id / keyId / created / deletedAt are intentionally omitted so an update
+      // can never change identity, creation time, or soft-delete state.
     }
 
     // Sync geopoint from data.location when present and not already set.
@@ -117,22 +135,6 @@ export class UnittypeService {
       if (!document.geopoint || !Array.isArray(document.geopoint.coordinates)) {
         document.geopoint = { type: 'Point', coordinates: [lon, lat] }
       }
-    }
-
-    // Numeric dirty-flag (0 | 1), matching the pipeline.
-    if (document.isShouldUpdate === undefined) {
-      document.isShouldUpdate = isUpdate ? 1 : 0
-    } else {
-      document.isShouldUpdate = Number(document.isShouldUpdate)
-    }
-
-    // Active records keep deletedAt = null (list filter matches { $eq: null }).
-    if (
-      document.deletedAt === undefined ||
-      document.deletedAt === '' ||
-      (typeof document.deletedAt === 'string' && document.deletedAt.trim() === '')
-    ) {
-      document.deletedAt = null
     }
 
     return document
