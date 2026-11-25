@@ -219,6 +219,61 @@ export class UnittypeService {
   }
 
   /**
+   * Map a project's data.unittype[] entry onto the unittype's embedded
+   * data.project.unit_type[] shape. Only the fields declared in the unit_type
+   * sub-schema are copied; anything else is dropped so the snapshot stays clean.
+   */
+  private static buildUnitTypeEntry(e: any): Record<string, any> {
+    return {
+      image: e?.image,
+      area_land: e?.area_land,
+      price_start: e?.price_start,
+      num_bed: e?.num_bed,
+      num_bath: e?.num_bath,
+      num_parking: e?.num_parking,
+      unittype_keyId: e?.unittype_keyId,
+      published: e?.published,
+      title: e?.title,
+      title_alt: e?.title_alt,
+      url: e?.url,
+      id: e?.id
+    }
+  }
+
+  /**
+   * Mirror the parent project's full data.unittype[] list back into THIS
+   * unittype's embedded snapshot at data.project.unit_type[], so the sibling
+   * list carried inside the unittype stays in sync with the project after a
+   * create/update (which has just pushed/updated this unittype into it).
+   *
+   * Best-effort: never throws. Returns the re-fetched unittype on success, or
+   * null when there is no parent to read (the caller keeps the prior document).
+   */
+  private static async mirrorProjectUnitTypes(u: any): Promise<any | null> {
+    const projectKey = u?.data?.project?.project_keyId
+    if (!projectKey) return null
+
+    try {
+      const project = await ProjectRead.findOne(
+        { $or: [{ keyId: projectKey }, { 'data.id': projectKey }] },
+        { 'data.unittype': 1 }
+      ).lean()
+
+      const list = (project as any)?.data?.unittype
+      if (!Array.isArray(list)) return null
+
+      const unitTypes = list.map((e) => this.buildUnitTypeEntry(e))
+      return await Unittype.findByIdAndUpdate(
+        u._id,
+        { $set: { 'data.project.unit_type': unitTypes } },
+        { new: true }
+      )
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Validate and create a new unittype document, then append it to the parent
    * project's data.unittype[] (best-effort).
    */
@@ -236,7 +291,10 @@ export class UnittypeService {
     const document = this.transformToDocument(payload, false)
     const saved = await new Unittype(document).save()
     const projectSync = await this.syncToProject(saved, 'push')
-    return { success: true, data: saved, projectSync }
+    // Pull the project's now-current data.unittype[] into this unittype's
+    // embedded data.project.unit_type[] snapshot.
+    const mirrored = await this.mirrorProjectUnitTypes(saved)
+    return { success: true, data: mirrored || saved, projectSync }
   }
 
   /**
@@ -303,7 +361,10 @@ export class UnittypeService {
 
     // Mirror the change into the parent project's data.unittype[].
     const projectSync = await this.syncToProject(updated, 'update')
-    return { success: true, data: updated, projectSync }
+    // Then pull the project's now-current data.unittype[] back into this
+    // unittype's embedded data.project.unit_type[] snapshot.
+    const mirrored = await this.mirrorProjectUnitTypes(updated)
+    return { success: true, data: mirrored || updated, projectSync }
   }
 
   /**
